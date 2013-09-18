@@ -18,23 +18,35 @@ namespace Avisota\Contao\Send;
 use Avisota\Contao\Entity\Message;
 use Avisota\RecipientSource\RecipientSourceInterface;
 
-class SendImmediateModule implements SendModuleInterface
+class SendImmediateModule extends \Controller implements SendModuleInterface
 {
+	public function __construct()
+	{
+		parent::__construct();
+	}
+
 	public function run(Message $message)
 	{
 		global $container;
 
-		$recipientSourceData = $message->getRecipients();
-		$serviceName         = sprintf('avisota.recipientSource.%s', $recipientSourceData->getId());
-		/** @var RecipientSourceInterface $recipientSource */
-		$recipientSource     = $container[$serviceName];
+		$this->loadLanguageFile('avisota_send_immediate');
 
-		$template = new \TwigTemplate('avisota/send/send_immediate', 'html5');
-		return $template->parse(
-			array(
-				 'message' => $message,
-				 'count'   => $recipientSource->countRecipients(),
-			)
-		);
+		$recipientSourceData = $message->getRecipients();
+
+		if ($recipientSourceData) {
+			$serviceName         = sprintf('avisota.recipientSource.%s', $recipientSourceData->getId());
+			/** @var RecipientSourceInterface $recipientSource */
+			$recipientSource     = $container[$serviceName];
+
+			$template = new \TwigTemplate('avisota/send/send_immediate', 'html5');
+			return $template->parse(
+				array(
+					 'message' => $message,
+					 'count'   => $recipientSource->countRecipients(),
+				)
+			);
+		}
+
+		return '';
 	}
 }

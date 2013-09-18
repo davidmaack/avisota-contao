@@ -36,10 +36,6 @@ $GLOBALS['TL_DCA']['orm_avisota_recipient'] = array
 			array('Avisota\Contao\DataContainer\Recipient', 'filterByMailingLists'),
 			array('Avisota\Contao\DataContainer\Recipient', 'onload_callback')
 		),
-		'onsubmit_callback' => array
-		(
-			array('Avisota\Contao\DataContainer\Recipient', 'onsubmit_callback')
-		),
 		'ondelete_callback' => array
 		(
 			array('Avisota\Contao\DataContainer\Recipient', 'ondelete_callback')
@@ -76,16 +72,23 @@ $GLOBALS['TL_DCA']['orm_avisota_recipient'] = array
 		),
 		'label'             => array
 		(
-			'fields'         => array('firstname', 'lastname', 'email'),
+			'fields'         => array('forename', 'surname', 'email'),
 			'format'         => '%s %s &lt;%s&gt;',
 			'label_callback' => array('Avisota\Contao\DataContainer\Recipient', 'getLabel')
 		),
 		'global_operations' => array
 		(
+			'all'     => array
+			(
+				'label'      => &$GLOBALS['TL_LANG']['MSC']['all'],
+				'href'       => 'act=select',
+				'class'      => 'header_edit_all',
+				'attributes' => 'onclick="Backend.getScrollOffset();" accesskey="e"'
+			),
 			'migrate' => array
 			(
 				'label'      => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['migrate'],
-				'href'       => 'table=orm_avisota_recipient_migrate&amp;act=edit',
+				'href'       => 'table=mem_avisota_recipient_migrate',
 				'class'      => 'header_recipient_migrate recipient_tool',
 				'attributes' => 'onclick="Backend.getScrollOffset();"'
 			),
@@ -110,16 +113,15 @@ $GLOBALS['TL_DCA']['orm_avisota_recipient'] = array
 				'class'      => 'header_recipient_remove recipient_tool',
 				'attributes' => 'onclick="Backend.getScrollOffset();"'
 			),
-			'all'     => array
-			(
-				'label'      => &$GLOBALS['TL_LANG']['MSC']['all'],
-				'href'       => 'act=select',
-				'class'      => 'header_edit_all',
-				'attributes' => 'onclick="Backend.getScrollOffset();" accesskey="e"'
-			)
 		),
 		'operations'        => array
 		(
+			'subscriptions'              => array
+			(
+				'label'           => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['subscriptions'],
+				'href'            => 'table=orm_avisota_recipient_subscription',
+				'icon'            => 'system/modules/avisota/assets/images/recipient_subscription.png',
+			),
 			'edit'                => array
 			(
 				'label'           => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['edit'],
@@ -149,13 +151,6 @@ $GLOBALS['TL_DCA']['orm_avisota_recipient'] = array
 				'href'  => 'act=show',
 				'icon'  => 'show.gif'
 			),
-			'notify'              => array
-			(
-				'label'           => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['notify'],
-				'href'            => '',
-				'icon'            => 'system/modules/avisota/html/notify.png',
-				'button_callback' => array('Avisota\Contao\DataContainer\Recipient', 'notify')
-			),
 		),
 	),
 	// Palettes
@@ -164,13 +159,13 @@ $GLOBALS['TL_DCA']['orm_avisota_recipient'] = array
 		'default' => array
 		(
 			'recipient' => array('email'),
-			'personals' => array('salutation', 'title', 'firstname', 'lastname', 'gender'),
+			'personals' => array('salutation', 'title', 'forename', 'surname', 'gender'),
 		)
 	),
 	// Fields
 	'fields'       => array
 	(
-		'id'                    => array(
+		'id'         => array(
 			'field' => array(
 				'id'      => true,
 				'type'    => 'string',
@@ -178,19 +173,21 @@ $GLOBALS['TL_DCA']['orm_avisota_recipient'] = array
 				'options' => array('fixed' => true),
 			),
 		),
-		'createdAt'             => array(
+		'createdAt'  => array(
+			'label' => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['createdAt'],
 			'field' => array(
 				'type'          => 'datetime',
 				'timestampable' => array('on' => 'create')
 			)
 		),
-		'updatedAt'             => array(
+		'updatedAt'  => array(
+			'label' => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['updatedAt'],
 			'field' => array(
 				'type'          => 'datetime',
 				'timestampable' => array('on' => 'update')
 			)
 		),
-		'email'                 => array
+		'email'      => array
 		(
 			'label'         => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['email'],
 			'exclude'       => true,
@@ -204,14 +201,14 @@ $GLOBALS['TL_DCA']['orm_avisota_recipient'] = array
 				'mandatory'  => true,
 				'maxlength'  => 255,
 				'importable' => true,
-				'exportable' => true
+				'exportable' => true,
 			),
 			'save_callback' => array
 			(
 				array('Avisota\Contao\DataContainer\Recipient', 'saveEmail')
 			)
 		),
-		'salutation'            => array
+		'salutation' => array
 		(
 			'label'     => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['salutation'],
 			'exclude'   => true,
@@ -227,10 +224,9 @@ $GLOBALS['TL_DCA']['orm_avisota_recipient'] = array
 				'feEditable'         => true,
 				'tl_class'           => 'w50'
 			),
-			'field'     => array(
-			),
+			'field'     => array(),
 		),
-		'title'                 => array
+		'title'      => array
 		(
 			'label'     => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['title'],
 			'exclude'   => true,
@@ -243,48 +239,47 @@ $GLOBALS['TL_DCA']['orm_avisota_recipient'] = array
 				'importable' => true,
 				'exportable' => true,
 				'feEditable' => true,
-				'tl_class'   => 'w50'
+				'tl_class'   => 'w50',
 			),
-			'field'     => array(
-			),
+			'field'     => array(),
 		),
-		'firstname'             => array
+		'forename'   => array
 		(
-			'label'     => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['firstname'],
+			'label'     => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['forename'],
 			'exclude'   => true,
 			'search'    => true,
 			'sorting'   => true,
 			'flag'      => 1,
 			'inputType' => 'text',
 			'eval'      => array(
-				'maxlength'  => 255,
-				'importable' => true,
-				'exportable' => true,
-				'feEditable' => true,
-				'tl_class'   => 'w50'
+				'maxlength'   => 255,
+				'importable'  => true,
+				'exportable'  => true,
+				'migrateFrom' => 'firstname',
+				'feEditable'  => true,
+				'tl_class'    => 'w50',
 			),
-			'field'     => array(
-			),
+			'field'     => array(),
 		),
-		'lastname'              => array
+		'surname'    => array
 		(
-			'label'     => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['lastname'],
+			'label'     => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['surname'],
 			'exclude'   => true,
 			'search'    => true,
 			'sorting'   => true,
 			'flag'      => 1,
 			'inputType' => 'text',
 			'eval'      => array(
-				'maxlength'  => 255,
-				'importable' => true,
-				'exportable' => true,
-				'feEditable' => true,
-				'tl_class'   => 'w50'
+				'maxlength'   => 255,
+				'importable'  => true,
+				'exportable'  => true,
+				'migrateFrom' => 'lastname',
+				'feEditable'  => true,
+				'tl_class'    => 'w50',
 			),
-			'field'     => array(
-			),
+			'field'     => array(),
 		),
-		'gender'                => array
+		'gender'     => array
 		(
 			'label'     => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['gender'],
 			'exclude'   => true,
@@ -296,29 +291,29 @@ $GLOBALS['TL_DCA']['orm_avisota_recipient'] = array
 				'includeBlankOption' => true,
 				'importable'         => true,
 				'exportable'         => true,
+				'migrateFrom'        => 'gender',
 				'feEditable'         => true,
-				'tl_class'           => 'clr'
+				'tl_class'           => 'clr',
 			),
-			'field'     => array(
-			),
+			'field'     => array(),
 		),
-		'addedOn'               => array
+		'addedOn'    => array
 		(
-			'label'   => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['addedOn'],
-			'filter'  => true,
-			'flag'    => 8,
-			'eval'    => array(
+			'label'  => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['addedOn'],
+			'filter' => true,
+			'flag'   => 8,
+			'eval'   => array(
 				'importable' => true,
 				'exportable' => true,
 				'doNotShow'  => true,
 				'doNotCopy'  => true
 			),
-			'field'   => array(
-				'type' => 'datetime',
+			'field'  => array(
+				'type'     => 'datetime',
 				'nullable' => true,
 			),
 		),
-		'addedBy'               => array
+		'addedBy'    => array
 		(
 			'label'      => &$GLOBALS['TL_LANG']['orm_avisota_recipient']['addedBy'],
 			'default'    => $this->User->id,
